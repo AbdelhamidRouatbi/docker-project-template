@@ -14,7 +14,7 @@ payload = {
     "version": DEFAULT_WORKSPACE
 }
 
-res = requests.post(f"http://localhost:{DEFAULT_PORT}/download_registry_model", json=payload)
+res = requests.post(f"http://0.0.0.0:{DEFAULT_PORT}/download_registry_model", json=payload)
 
 print(res.status_code)
 print(res.json())
