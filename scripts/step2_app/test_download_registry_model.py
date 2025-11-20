@@ -11,7 +11,7 @@ payload = {
     "workspace": DEFAULT_WORKSPACE,
     "project": DEFAULT_PROJECT,
     "model": DEFAULT_MODEL,
-    "version": DEFAULT_WORKSPACE
+    "version": DEFAULT_VERSION
 }
 
 res = requests.post(f"http://0.0.0.0:{DEFAULT_PORT}/download_registry_model", json=payload)

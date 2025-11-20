@@ -95,9 +95,13 @@ def main():
     df = fe.combine_df()
     df = fe.calculate_distance_from_net(df)
     df = fe.calculate_empty_net(df)
-    save_path = os.path.join(fe._save_data_path, "master.csv")
     os.makedirs(fe._save_data_path, exist_ok=True)
+    
+    save_path = os.path.join(fe._save_data_path, "master.csv")
     df.to_csv(save_path, index=False)
+
+    save_path = os.path.join(fe._save_data_path, "test_sample.csv")
+    df.head(20).to_csv(save_path,index=False)
 
     print(f"Data saved to {save_path}")
 
