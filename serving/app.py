@@ -32,7 +32,7 @@ LOG_FILE = "./flask.log"
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DEFAULT_WORKSPACE="IFT6758_team4"
 DEFAULT_PROJECT="milestone_2"
-DEFAULT_MODEL= MODEL_NAMES[0]
+DEFAULT_MODEL= MODEL_NAMES[1]
 CURRENT_MODEL_STRING = MODEL_NAMES[0]
 DEFAULT_VERSION="v1"
 ARTIFACT_DIR = f"../artifacts"
@@ -43,6 +43,7 @@ os.makedirs(ARTIFACT_DIR, exist_ok=True)
 app = Flask(__name__)
 
 def download_model(workspace, project, model_name, version):
+    wb_login()
     model_path = f'{ARTIFACT_DIR}/{model_name}:{version}/{model_name}.joblib'
     if os.path.exists(model_path):
 
@@ -86,16 +87,50 @@ def download_model(workspace, project, model_name, version):
         finally:
             wandb.finish()
 
+
+def load_wandb_key(path="./WANDB_API_KEY.txt"):
+    try:
+        with open(path, "r") as f:
+            key = f.read().strip()
+            return key
+    except Exception as e:
+        log_message=f"Could not read W&B key file: {e}"
+        print(log_message)
+        return None
+
+
+def wb_login():   
+
+    api_key = os.environ.get("WANDB_API_KEY")
+    if not api_key:
+        app.logger.warning("WANDB_API_KEY not set in the environment - looking locally")
+        api_key= load_wandb_key()
+        if not api_key:
+            app.logger.warning("WANDB_API_KEY not found locally either")
+        app.logger.info("WANDB_API_KEY found locally")
+
+    if api_key:
+        try:
+            wandb.login(key=api_key)
+            app.logger.info("Logged into Weights & Biases")
+        except Exception as e:
+            log_message= f"Could not logged into Weights & Biases, error : {e}"
+            app.logger.info(log_message)
+
+    return None
+
 def before_first_request():
 
     """
     Load default model, 
-    setup logging handler)
+    
     """
     logging.basicConfig(filename=LOG_FILE, 
                         filemode="w",
                         level=logging.INFO, format=FORMAT)
-    
+
+
+
     return download_model(DEFAULT_WORKSPACE, DEFAULT_PROJECT, DEFAULT_MODEL, DEFAULT_VERSION)
 
 def is_missing(value):
