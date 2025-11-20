@@ -36,27 +36,29 @@ DEFAULT_MODEL= MODEL_NAMES[1]
 CURRENT_MODEL_STRING = MODEL_NAMES[0]
 DEFAULT_VERSION="v1"
 ARTIFACT_DIR = f"../artifacts"
-MODEL=None
 os.makedirs(ARTIFACT_DIR, exist_ok=True)
 
 
 app = Flask(__name__)
 
 def download_model(workspace, project, model_name, version):
-    wb_login()
+    global MODEL
+    global CURRENT_MODEL_STRING
     model_path = f'{ARTIFACT_DIR}/{model_name}:{version}/{model_name}.joblib'
-    if os.path.exists(model_path):
 
+    if os.path.exists(model_path):
         log_message=f'Model {model_name} already downloaded.'
         app.logger.info(log_message) # debug, info, warning, error, critical
+        MODEL = joblib.load(model_path)
         log_message=f'Model {model_name} is loaded'
         app.logger.info(log_message) 
         print(log_message)
         CURRENT_MODEL_STRING=model_name
-        return joblib.load(model_path), log_message
+        return {"info":log_message}
     
     else:
         try:
+            wb_login()
             run = wandb.init(project=project) 
 
             wb_path = f"{workspace}/{project}/{model_name}:{version}"
@@ -73,8 +75,8 @@ def download_model(workspace, project, model_name, version):
             except Exception as e:
                 log_message=f'Model {model_name} failed loaded.'
                 app.logger.error(log_message)
-                return MODEL, log_message
-            return MODEL, log_message
+                return  {"error":log_message}
+            return {"info":log_message}
         
         except Exception as e:
 
@@ -82,7 +84,7 @@ def download_model(workspace, project, model_name, version):
             app.logger.error(log_message)
             print(log_message)
 
-            return MODEL, log_message
+            return {"error":log_message}
 
         finally:
             wandb.finish()
@@ -136,7 +138,8 @@ def before_first_request():
 def is_missing(value):
     return value is None or (isinstance(value, str) and value.strip() == "")
 
-MODEL, mes = before_first_request()
+mes = before_first_request()
+print(mes)
 
 
 @app.route("/")
@@ -160,7 +163,7 @@ def logs():
             logs.append(line.strip())
     response=logs
 
-    return jsonify(response)  
+    return jsonify({"Flask logs":response})
 
 
 @app.route("/download_registry_model", methods=["POST"])
@@ -183,24 +186,24 @@ def download_registry_model():
     """
 
     # Get POST json data
-    json = request.get_json()
-    app.logger.info(json)
+    data = request.get_json()
+    app.logger.info(data)
 
     required = ["workspace", "project", "model", "version"]
-    missing = [key for key in required if is_missing(json.get(key))]
+    missing = [key for key in required if is_missing(data.get(key))]
 
     if missing:
         log_message=f"Missing required fields: {', '.join(missing)}"
         app.logger.error(log_message)
-        return jsonify(log_message)
+        return jsonify({"error": log_message})
 
-    workspace=json.get("workspace")
-    project=json.get("project")
-    model_name = json.get("model")
-    version=json.get("version")
+    workspace=data.get("workspace")
+    project=data.get("project")
+    model_name = data.get("model")
+    version=data.get("version")
 
     # Load the model
-    MODEL, response = download_model(workspace,project,model_name,version) 
+    response = download_model(workspace,project,model_name,version) 
     #print(MODEL.feature_names_in_)
     return jsonify(response)
 
@@ -208,6 +211,7 @@ def download_registry_model():
 
 @app.route("/predict", methods=["POST"])
 def predict():
+    global MODEL
     """
     Handles POST requests made to http://IP_ADDRESS:PORT/predict
 
@@ -220,7 +224,7 @@ def predict():
     if json_data is None:
         log_message="No data received"
         app.logger.error(log_message)
-        return jsonify(log_message)
+        return jsonify({"error": log_message})
     
     app.logger.info("json received")
     app.logger.info("/predicting...")
@@ -232,7 +236,7 @@ def predict():
     except Exception as e:
         log_message=f"Could not parse json data: {e}"
         app.logger.error(log_message)
-        return jsonify(log_message)
+        return jsonify({"error": log_message})
     
     log_message="Parsing json data successful"
     app.logger.info(log_message)
@@ -252,7 +256,7 @@ def predict():
     if missing:
         log_message = f"Missing required features: {missing}"
         app.logger.error(log_message)
-        return jsonify(log_message)
+        return jsonify({"error": log_message})
 
     app.logger.info(f"/predict: DataFrame shape: {X.shape}")
 
@@ -280,7 +284,7 @@ def predict():
     }
 
     app.logger.info(response)
-    return jsonify(response)  # response must be json serializable!
+    return (response)  # response must be json serializable!
 
 if __name__ == "__main__":
     app.run()
