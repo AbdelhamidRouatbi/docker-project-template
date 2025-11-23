@@ -28,7 +28,7 @@ if "meta" not in st.session_state:
 # ================================================
 # CLIENT
 # ================================================
-serving = ServingClient(ip="127.0.0.1", port=5000)
+serving = ServingClient(ip="127.0.0.1", port=5000) # Local flask app
 
 st.title("Hockey Expected Goals Dashboard")
 
