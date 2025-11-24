@@ -171,3 +171,11 @@ if len(st.session_state.df) > 0:
 else:
     st.info("No data yet — ping a game.")
 
+# ===================================================
+# CUMULATIVE XG TIMELINE
+# ===================================================
+st.subheader("Cumulative xG Timeline")
+
+from bonus import plot_cumulative_xg  # or wherever your function is
+
+plot_cumulative_xg(st.session_state.df)
