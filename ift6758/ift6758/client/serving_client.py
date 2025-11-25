@@ -86,7 +86,7 @@ class ServingClient:
 
 
 
-    def download_registry_model(self, workspace: str = "IFT6758_team4", project: str = "milestone_2", model: str="lr-distance", version: str = "v1") -> dict:
+    def download_registry_model(self, workspace: str = "IFT6758_team4",model: str = "lr-distance",version: str = "v1",project: str = "milestone_2",) -> dict:
         """
         Triggers a "model swap" in the service; the workspace, model, and model version are
         specified and the service looks for this model in the model registry and tries to
@@ -120,10 +120,6 @@ class ServingClient:
         log_message=f'Request to swap model {model}, version {version} sent'
         logger.info(log_message)
         return (res.json())
-
-
-client = ServingClient(ip="0.0.0.0", port=8000, features=["distance_from_net"])
-
 
 #PATH="./ift6758/data/nhl/csv/processed/test_sample.csv"
 #df=pd.read_csv(PATH)

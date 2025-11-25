@@ -12,16 +12,20 @@ services:
       - WANDB_API_KEY=${WANDB_API_KEY}
     restart: unless-stopped
 
-  # Streamlit service will be added later in Milestone 3 (Part II)
-  # streamlit:
-  #   build:
-  #     context: ./
-  #     dockerfile: ./Dockerfile.streamlit
-  #   image: ift6758-streamlit
-  #   ports:
-  #     - "8501:8501"
-  #   environment:
-  #     - WANDB_API_KEY=${WANDB_API_KEY}
+  streamlit:
+      build:
+        context: .
+        dockerfile: Dockerfile.streamlit
+      image: ift6758-streamlit
+      ports:
+        - "8501:8501"
+      environment:
+        - WANDB_API_KEY=${WANDB_API_KEY}
+        - SERVING_HOST=serving
+        - SERVING_PORT=5000
+      depends_on:
+        - serving
+      restart: unless-stopped
 
       
 

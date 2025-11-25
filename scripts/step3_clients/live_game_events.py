@@ -9,16 +9,19 @@ if project_root not in sys.path:
 from ift6758.ift6758.client.serving_client import ServingClient
 from scripts.step1_data.feature_engineering_milestone_3 import FeatureEngineering
 
+SERVING_HOST = os.getenv("SERVING_HOST", "127.0.0.1")
+SERVING_PORT = int(os.getenv("SERVING_PORT", "5000"))
+
+
 # Track last seen index per game
 last_seen = {}
 
 # Local ServingClient
 client = ServingClient(
-    ip="127.0.0.1",
-    port=5000,
+    ip=SERVING_HOST,
+    port=SERVING_PORT,
     features=["distance_from_net", "shot_angle", "empty_net"]
 )
-
 
 # -------------------------------------------------------------
 # Fetch game JSON

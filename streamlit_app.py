@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import requests
@@ -5,6 +6,9 @@ import requests
 from ift6758.ift6758.client.serving_client import ServingClient
 from scripts.step3_clients.live_game_events import poll_and_predict
 
+
+SERVING_HOST = os.getenv("SERVING_HOST", "127.0.0.1")
+SERVING_PORT = int(os.getenv("SERVING_PORT", "5000"))
 
 # ================================================
 # SESSION STATE
@@ -28,7 +32,8 @@ if "meta" not in st.session_state:
 # ================================================
 # CLIENT
 # ================================================
-serving = ServingClient(ip="127.0.0.1", port=5000) # Local flask app
+# serving = ServingClient(ip="127.0.0.1", port=5000) # Local flask app
+serving = ServingClient(ip=SERVING_HOST, port=SERVING_PORT)
 
 st.title("Hockey Expected Goals Dashboard")
 
