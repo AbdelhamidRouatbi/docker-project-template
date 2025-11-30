@@ -5,6 +5,7 @@ import requests
 
 from ift6758.ift6758.client.serving_client import ServingClient
 from scripts.step3_clients.live_game_events import poll_and_predict
+import bonus as bonus
 
 
 SERVING_HOST = os.getenv("SERVING_HOST", "127.0.0.1")
@@ -181,6 +182,28 @@ else:
 # ===================================================
 st.subheader("Cumulative xG Timeline")
 
-from bonus import plot_cumulative_xg  # or wherever your function is
+bonus.plot_cumulative_xg(st.session_state.df)
 
-plot_cumulative_xg(st.session_state.df)
+# ===================================================
+# HEATMAPS
+# ===================================================
+st.subheader("Shot Heatmaps (xG Density)")
+
+df = st.session_state.df
+
+if len(df) == 0:
+    st.info("No events yet. Ping a game first.")
+else:
+    home_img, away_img = bonus.compute_heatmaps(df)
+
+    col_h, col_a = st.columns(2)
+
+    with col_h:
+        st.markdown("### Home Heatmap")
+        fig_home = bonus.overlay_rink_on_heatmap(home_img, alpha_heatmap=0.90)
+        st.pyplot(fig_home)
+
+    with col_a:
+        st.markdown("### Away Heatmap")
+        fig_away = bonus.overlay_rink_on_heatmap(away_img, alpha_heatmap=0.90)
+        st.pyplot(fig_away)

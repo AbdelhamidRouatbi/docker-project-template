@@ -27,6 +27,7 @@ COPY scripts /app/scripts
 COPY streamlit_app.py /app/streamlit_app.py
 COPY bonus.py /app/bonus.py
 COPY serving /app/serving
+COPY figures/nhl_rink-no_background.png /app/figures/nhl_rink-no_background.png
 
 # ------------------------------
 # Streamlit server

@@ -1,6 +1,11 @@
 import plotly.graph_objects as go
 import streamlit as st
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from matplotlib.colors import LinearSegmentedColormap
+from scipy.ndimage import zoom
+
 
 def plot_cumulative_xg(df):
     if df.empty:
@@ -71,3 +76,137 @@ def plot_cumulative_xg(df):
 
     st.plotly_chart(fig, use_container_width=True)
 
+
+def gaussian_smooth(hist, smoothing_factor=4, sigma=1.0):
+    """
+    Manual Gaussian smoothing on a finer grid.
+    hist: (n_bins_x, n_bins_y)
+    """
+    n_bins_x, n_bins_y = hist.shape
+
+    # --- 1. Fine grid dimensions ---
+    fine_x = n_bins_x * smoothing_factor
+    fine_y = n_bins_y * smoothing_factor
+
+    # --- 2. Bin centers (normalized 0..1 space) ---
+    bin_x_centers = np.linspace(0, 1, n_bins_x, endpoint=False) + 0.5/n_bins_x
+    bin_y_centers = np.linspace(0, 1, n_bins_y, endpoint=False) + 0.5/n_bins_y
+    bin_X, bin_Y = np.meshgrid(bin_x_centers, bin_y_centers, indexing="ij")
+    bin_centers = np.column_stack((bin_X.ravel(), bin_Y.ravel()))
+    bin_values = hist.ravel()
+
+    # --- 3. Fine grid cell centers ---
+    cell_x_centers = np.linspace(0, 1, fine_x, endpoint=False) + 0.5/fine_x
+    cell_y_centers = np.linspace(0, 1, fine_y, endpoint=False) + 0.5/fine_y
+    cell_X, cell_Y = np.meshgrid(cell_x_centers, cell_y_centers, indexing="ij")
+    cell_centers = np.column_stack((cell_X.ravel(), cell_Y.ravel()))
+
+    # --- 4. Gaussian kernel weights ---
+    diff = cell_centers[:, None, :] - bin_centers[None, :, :]
+    squared_distances = np.sum(diff**2, axis=2)
+    weights = np.exp(-squared_distances / (2 * sigma * sigma))
+
+    # weighted sum from all bins
+    fine_values = weights @ bin_values
+    fine_grid = fine_values.reshape(fine_x, fine_y)
+    return fine_grid
+    
+def compute_heatmaps(df, 
+                     n_bins=20, 
+                     smoothing_factor=10, 
+                     variance=0.04,
+                     out_width=400, 
+                     out_height=170):
+
+    def make_team_map(df_team, flip_mask):
+        # Flip coordinates based on mask
+        df_team = df_team.copy()
+        df_team.loc[flip_mask, "x_coord"] *= -1
+        df_team.loc[flip_mask, "y_coord"] *= -1
+
+        # Bin ranges
+        x_min, x_max = 0, 100
+        y_min, y_max = -42.5, 42.5
+        x_bins = np.linspace(x_min, x_max, n_bins + 1)
+        y_bins = np.linspace(y_min, y_max, n_bins + 1)
+
+        # xG-weighted histogram
+        hist, _, _ = np.histogram2d(
+            df_team["x_coord"],
+            df_team["y_coord"],
+            bins=[x_bins, y_bins],
+            weights=df_team["proba_goal"]
+        )
+
+        # Smoothing
+        smooth_hist = gaussian_smooth(hist, smoothing_factor, sigma=variance)
+
+        # Interpolate to final size
+        current_h, current_w = smooth_hist.shape
+        zoom_x = out_width  / current_w
+        zoom_y = out_height / current_h
+        final_img = zoom(smooth_hist, (zoom_y, zoom_x))
+
+        return final_img
+
+    # Filter valid shot events
+    df = df[df["event_type"].isin(["SHOT-ON-GOAL", "MISSED-SHOT", "BLOCKED-SHOT"])].copy()
+
+    # HOME TEAM
+    df_home = df[df["home"] == True]
+    home_flip_mask = (df_home["period"] % 2 == 1)   # flip on odd periods
+    home_img = make_team_map(df_home, home_flip_mask)
+
+    # AWAY TEAM
+    df_away = df[df["away"] == True]
+    away_flip_mask = (df_away["period"] % 2 == 0)   # flip on even periods
+    away_img = make_team_map(df_away, away_flip_mask)
+
+    return home_img, away_img
+
+def overlay_rink_on_heatmap(heatmap,
+                            path="figures/nhl_rink-no_background.png",
+                            x_min=0, x_max=100,
+                            y_min=-42.5, y_max=42.5,
+                            alpha_heatmap=1):
+
+    img = mpimg.imread(path)
+    h, w, c = img.shape
+
+    # right half
+    img = img[:, w//2:, :]        
+
+    # rotate heatmap + rink CCW 90
+    heatmap = np.rot90(heatmap.T, k=-1)
+    img = np.rot90(img, k=-1)
+
+    # white → red
+    white_to_red = LinearSegmentedColormap.from_list(
+        "white_to_red", [(1,1,1), (1,0,0)]
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # heatmap
+    ax.imshow(
+        heatmap,
+        origin="lower",
+        extent=[x_min, x_max, y_min, y_max],
+        cmap=white_to_red,
+        alpha=alpha_heatmap,
+        aspect="auto"
+    )
+
+    # rink overlay
+    ax.imshow(
+        img,
+        origin="lower",
+        extent=[x_min, x_max, y_min, y_max],
+        aspect="auto"
+    )
+
+    ax.set_xlabel("X (ft)")
+    ax.set_ylabel("Y (ft)")
+
+    fig.tight_layout()
+    return fig

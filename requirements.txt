@@ -8,3 +8,4 @@ wandb
 streamlit
 tqdm
 plotly
+matplotlib
