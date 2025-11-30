@@ -64,7 +64,6 @@ def build_dataframe_for_predict(new_events, game_json):
         # we only model shot-like events
         if type_key not in ("shot-on-goal", "missed-shot", "blocked-shot", "goal"):
             continue
-
         d = ev.get("details", {})
         x = d.get("xCoord")
         y = d.get("yCoord")
@@ -99,7 +98,6 @@ def build_dataframe_for_predict(new_events, game_json):
         return pd.DataFrame()
 
     df = pd.DataFrame(rows)
-
     # ---- APPLY FEATURE ENGINEERING ----
     fe = FeatureEngineering()
     df = fe.calculate_distance_from_net(df)

@@ -160,7 +160,7 @@ if len(st.session_state.df) > 0:
     SHOW_COLS = [
         "event_team", "period", "time_remaining",
         "distance_from_net", "shot_angle", "empty_net",
-        "prediction", "proba_goal",
+        "prediction", "proba_goal", "is_goal"
     ]
 
     existing_cols = [c for c in SHOW_COLS if c in st.session_state.df.columns]

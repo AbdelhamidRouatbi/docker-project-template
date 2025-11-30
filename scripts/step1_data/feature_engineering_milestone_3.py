@@ -40,32 +40,35 @@ class FeatureEngineering:
     
 
     def assign_net(self, df: pd.DataFrame) -> pd.Series:
-        
         period = pd.to_numeric(df["period"], errors="coerce")
         home_flag = df["home"].astype("boolean")
 
-        odd_period = (period % 2 == 1)
+        odd_period = (period % 2 == 1)  # 1st, 3rd, OT
         home_def_x = np.where(odd_period, 89, -89)
         away_def_x = np.where(odd_period, -89, 89)
-        net_x = np.where(home_flag, home_def_x, away_def_x)
 
+        net_x = np.where(home_flag, home_def_x, away_def_x)
         return pd.Series(net_x, index=df.index)
 
 
     def calculate_distance_from_net(self, df: pd.DataFrame) -> pd.DataFrame:
-
         df = df.copy()
-        net_x = self.assign_net(df)
+
+        defend_net_x = self.assign_net(df)
+
+        attack_net_x = -defend_net_x
+
         x = pd.to_numeric(df["x_coord"], errors="coerce")
         y = pd.to_numeric(df["y_coord"], errors="coerce")
 
-        dx = net_x - x
+        dx = attack_net_x - x
         dy = -y
 
         df["distance_from_net"] = np.sqrt(dx**2 + dy**2)
         df["shot_angle"] = np.degrees(np.arctan2(np.abs(dy), np.abs(dx)))
 
         return df
+
 
 
 
