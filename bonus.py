@@ -22,9 +22,8 @@ def plot_cumulative_xg(df):
     df = df.copy()
     df["time_sec"] = df["time_remaining"].apply(to_seconds)
 
-    # Convert countdown time → elapsed time
     df["game_clock"] = (df["period"] - 1) * 20 * 60 + (20*60 - df["time_sec"])
-    df["game_clock_min"] = df["game_clock"] / 60.0  # <-- MINUTES
+    df["game_clock_min"] = df["game_clock"] / 60.0 
 
     df = df.sort_values("game_clock")
 
@@ -205,8 +204,27 @@ def overlay_rink_on_heatmap(heatmap,
         aspect="auto"
     )
 
-    ax.set_xlabel("X (ft)")
+    ax.set_xlabel("Y (ft)")
     ax.set_ylabel("Y (ft)")
+
+    xticks = [0, 25, 50, 75, 100]
+    xtick_labels = np.interp(
+        xticks,
+        [0, 100],
+        [42.5, -42.5]
+    )
+    xtick_labels = [round(v, 2) for v in xtick_labels]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xtick_labels)
+
+    y_display = [0, 20, 40, 60, 80, 100]
+    yticks = np.interp(
+        y_display,
+        [0, 100],         
+        [-42.5, 42.5]    
+    )
+    ax.set_yticks(yticks)
+    ax.set_yticklabels([str(v) for v in y_display])
 
     fig.tight_layout()
     return fig

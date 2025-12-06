@@ -54,17 +54,24 @@ class FeatureEngineering:
     def calculate_distance_from_net(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
 
-        defend_net_x = self.assign_net(df)
-
-        attack_net_x = -defend_net_x
-
         x = pd.to_numeric(df["x_coord"], errors="coerce")
         y = pd.to_numeric(df["y_coord"], errors="coerce")
 
-        dx = attack_net_x - x
+        defend_net_x = self.assign_net(df)
+        dx = defend_net_x - x
         dy = -y
+        dist = np.sqrt(dx**2 + dy**2)
 
-        df["distance_from_net"] = np.sqrt(dx**2 + dy**2)
+        median_dist = np.nanmedian(dist)
+        needs_flip = median_dist > 80
+
+        if needs_flip:
+            defend_net_x = -defend_net_x
+            dx = defend_net_x - x
+            dy = -y
+            dist = np.sqrt(dx**2 + dy**2)
+
+        df["distance_from_net"] = dist
         df["shot_angle"] = np.degrees(np.arctan2(np.abs(dy), np.abs(dx)))
 
         return df

@@ -161,7 +161,7 @@ if len(st.session_state.df) > 0:
     SHOW_COLS = [
         "event_team", "period", "time_remaining",
         "distance_from_net", "shot_angle", "empty_net",
-        "prediction", "proba_goal", "is_goal"
+        "proba_goal", "prediction"
     ]
 
     existing_cols = [c for c in SHOW_COLS if c in st.session_state.df.columns]
@@ -207,3 +207,14 @@ else:
         st.markdown("### Away Heatmap")
         fig_away = bonus.overlay_rink_on_heatmap(away_img, alpha_heatmap=0.90)
         st.pyplot(fig_away)
+
+# ===================================================
+# FOOTER
+# ===================================================
+st.text(
+    "Bonus Features:\n"
+    "We implemented bonus features that go beyond the basic requirements to make our app better. "
+    "We retrieve the team logos from the NHL API and display them in the main layout. "
+    "We compute the cumulative xG timeline by converting game time and applying a cumulative sum of predicted goal probabilities. "
+    "We generate xG heatmaps by building xG-weighted histograms, smoothing them with a Gaussian method and interpolation, and overlay the result on a rink image. This is similar to what we did in milestone 1 for the advanced visualizations. This can help teams identify which areas are generating more threat on their defense, and which areas in the opponent's defense are considered weak."
+)
