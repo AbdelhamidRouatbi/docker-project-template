@@ -172,14 +172,9 @@ def overlay_rink_on_heatmap(heatmap,
     img = mpimg.imread(path)
     h, w, c = img.shape
 
-    # right half
     img = img[:, w//2:, :]        
-
-    # rotate heatmap + rink CCW 90
     heatmap = np.rot90(heatmap.T, k=-1)
     img = np.rot90(img, k=-1)
-
-    # white → red
     white_to_red = LinearSegmentedColormap.from_list(
         "white_to_red", [(1,1,1), (1,0,0)]
     )
@@ -196,7 +191,7 @@ def overlay_rink_on_heatmap(heatmap,
         aspect="auto"
     )
 
-    # rink overlay
+    # rink
     ax.imshow(
         img,
         origin="lower",

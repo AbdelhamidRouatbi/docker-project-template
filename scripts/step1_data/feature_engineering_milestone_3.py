@@ -43,7 +43,7 @@ class FeatureEngineering:
         period = pd.to_numeric(df["period"], errors="coerce")
         home_flag = df["home"].astype("boolean")
 
-        odd_period = (period % 2 == 1)  # 1st, 3rd, OT
+        odd_period = (period % 2 == 1)
         home_def_x = np.where(odd_period, 89, -89)
         away_def_x = np.where(odd_period, -89, 89)
 
